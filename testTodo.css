@@ -1,0 +1,113 @@
+body {
+  background-color: lightslategray;
+}
+
+.navbar {
+  display: flex;
+  justify-content: space-between;
+  background-color: rgb(44, 42, 42);
+  height: 30px;
+}
+.btn {
+  height: 30px;
+}
+.center {
+  display: flex;
+}
+.listItemsContainer {
+  display: flex;
+  flex-wrap: wrap;
+}
+.listItems {
+  height: 175px;
+  width: 175px;
+  margin: 30px;
+}
+.lists {
+  /* margin: 25px; */
+  border-radius: 5px;
+  background: maroon;
+  overflow: hidden;
+  height: 150px;
+  width: 150px;
+}
+.listName {
+  font-family: 'Times New Roman', Times, serif;
+  overflow: hidden;
+  width: 125px;
+}
+.tasksInside {
+  margin-top: 0px;
+  margin-bottom: 0px;
+}
+.footer {
+  margin-top: 80%;
+  background-color: rgb(44, 42, 42);
+  /* margin-bottom: 0px; */
+}
+.listPage {
+  /* display:none */
+}
+.taskPage {
+  display: none;
+}
+.taskInput {
+  width: 50%;
+  margin-left: 25%;
+  margin-top: 15px;
+}
+.tasks {
+  background-color: honeydew;
+  margin-top: 10px;
+  width: 75%;
+  margin-left: 12.5%;
+}
+.task {
+  display: flex;
+}
+.checkbox {
+  margin: 10px;
+}
+.taskName {
+  margin: 7.5px 0;
+}
+.taskFeatures {
+  margin: 20px;
+  padding-bottom: 20px;
+  display: grid;
+  grid-column-gap: 20px;
+  /* justify-content: space-around; */
+}
+.notes {
+  grid-column: 1/2;
+  grid-row: 1/2;
+}
+.dueDate {
+  grid-column: 2/3;
+  grid-row: 1/2;
+}
+.textNotes {
+  grid-column: 1/2;
+  grid-row: 2/10;
+}
+.date {
+  grid-column: 2/3;
+  grid-row: 2/3;
+}
+.priority {
+  grid-row: 3/4;
+  grid-column: 2/3;
+}
+.prioritySelect {
+  grid-row: 4/5;
+  grid-column: 2/3;
+}
+.delete {
+  grid-row: 9/10;
+  grid-column: 2/3;
+  /* width: 100px; */
+  background-color: red;
+  color: white;
+  justify-self: center;
+  margin: 10px;
+}
