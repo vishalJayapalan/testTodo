@@ -34,10 +34,11 @@ function listFromLocalStorage(lists) {
       'div',
       { id: list, className: 'listItems' },
       elt('div', { id: list, className: 'lists' }),
+      elt('i', { id: list, className: "fas fa-archive" }),
       elt('p', { id: list, className: 'listName', textContent: cnt.name })
     ) // check with id
     listContainer.appendChild(res)
-  }
+  } deleteSelectorList()
   divSelectorList()
   pSelectorList()
 }
@@ -53,20 +54,41 @@ function createList() {
         className: 'listItems'
       },
       elt('div', { id: count, className: 'lists' }),
-      elt('p', { id: count, className: 'listName', innerText: listName }),
-      elt('i')
+      elt('i', { id: count, className: "fas fa-archive" }),
+      elt('p', { id: count, className: 'listName', innerText: listName })
     )
     listContainer.appendChild(res)
+    console.log(list)
     list.push(res.id)
     localStorage.setItem(
       `${res.id}`,
       JSON.stringify({ id: res.id, name: listName, todos: [] })
     )
     localStorage.setItem('todo', JSON.stringify(list))
+    deleteSelectorList()
     pSelectorList()
     divSelectorList()
   }
 }
+
+function deleteSelectorList() {
+  const deleteImage = document.querySelectorAll('.fa-archive')
+  for (const deletes of Array.from(deleteImage)) {
+    deletes.addEventListener('click', deleteList)
+  }
+}
+function deleteList(event) {
+  const listId = event.target.id
+  // console.log(listId + " list id")
+  const deleteElement = document.getElementById(`${listId}`)
+  deleteElement.parentNode.removeChild(deleteElement)
+  // let list = JSON.parse(localStorage.getItem('todo'))
+  list = list.filter(a => a != listId)
+  console.log(list)
+  localStorage.removeItem(`${listId}`)
+  localStorage.setItem('todo', JSON.stringify(list))
+}
+
 function divSelectorList() {
   const selectDiv = document.querySelectorAll('.lists')
   for (const list of Array.from(selectDiv)) {
@@ -104,14 +126,16 @@ function pSelectorList() {
 
 function renameList(event) {
   const newName = prompt('new list name')
-  const listId = event.target.id
-  let list = JSON.parse(localStorage.getItem(`${listId}`))
-  const listName = document.querySelectorAll(`.${event.target.className}`)
-  for (const lists of Array.from(listName)) {
-    if (lists.id === `${listId}`) lists.textContent = newName
+  if (newName) {
+    const listId = event.target.id
+    let list = JSON.parse(localStorage.getItem(`${listId}`))
+    const listName = document.querySelectorAll(`.${event.target.className}`)
+    for (const lists of Array.from(listName)) {
+      if (lists.id === `${listId}`) lists.textContent = newName
+    }
+    list["name"] = newName
+    localStorage.setItem(`${listId}`, JSON.stringify(list))
   }
-  list["name"] = newName
-  localStorage.setItem(`${listId}`, JSON.stringify(list))
 }
 function selectList() { }
 
@@ -150,16 +174,22 @@ function taskFromLocalStorage(event) {
           elt('input', {
             type: 'checkbox',
             className: `checkbox ${todo.tId}`,
-            checked: `${todo.checkbox}`
+            checked: todo.checked
           }),
           elt('p', {
+            id: `${todo.tId}`,
             className: `taskName ${todo.tId}`,
             textContent: todo.tName
+          }),
+          elt('i', {
+            id: `${todo.tId}`,
+            className: `fas fa-angle-down openTaskFeaturesBtn ${todo.tId}`
           })
-        ),
+        ), elt('hr', { className: "hr" }),
         elt(
           'div',
           {
+            id: `${todo.tId}`,
             className: 'taskFeatures'
           },
           elt('p', {
@@ -221,12 +251,10 @@ function taskFromLocalStorage(event) {
     }
   }
 
-  pTaskNameOpener()
+  // pTaskNameOpener()
+  featureOpenSelectorTask()
+  // pSelectorTask()
   doneUpdateSelector()
-  notesUpdateSelector()
-  dateChangeSelector()
-  deleteTaskSelector()
-  priorityChangeSelector()
 }
 
 function addTask(event, listId) {
@@ -247,15 +275,21 @@ function addTask(event, listId) {
         className: `checkbox ${listId}|${todoCount}`
       }),
       elt('p', {
+        id: `${listId}|${todoCount}`,
         className: `taskName ${listId}|${todoCount}`,
         textContent: taskName
+      }),
+      elt('i', {
+        id: `${listId}|${todoCount}`,
+        className: `fas fa-angle-down openTaskFeaturesBtn ${listId}|${todoCount}`
       })
     ),
     elt(
       'div',
       {
+        id: `${listId}|${todoCount}`,
         className: `taskFeatures ${listId}|${todoCount}`
-      },
+      }, elt('hr', {}),
       elt('p', {
         className: `notes ${listId}|${todoCount}`,
         textContent: 'Notes'
@@ -300,22 +334,45 @@ function addTask(event, listId) {
     checked: false,
     tName: `${taskName}`,
     priority: 'none',
-    date: 'No Date Set',
+    date: false,
     notes: ''
   })
   localStorage.setItem(`${listId}`, JSON.stringify(list))
-  deleteTaskSelector()
-  dateChangeSelector()
-  priorityChangeSelector()
-  notesUpdateSelector()
   doneUpdateSelector()
-  pTaskNameOpener()
+  featureOpenSelectorTask()
+  // pSelectorTask()
+  // pTaskNameOpener()
 }
 
 back.addEventListener('click', backToListPage)
 
-function pTaskNameOpener() {
+function featureOpenSelectorTask() {
+  const featureTask = document.querySelectorAll('.openTaskFeaturesBtn')
+  for (const task of Array.from(featureTask)) {
+    task.addEventListener('click', featureTaskOpener)
+  }
+}
 
+function featureTaskOpener(event) {
+  let taskId = event.target.id
+  const taskFeatures = document.querySelectorAll('.taskFeatures')
+  for (const task of Array.from(taskFeatures)) {
+    if (task.id == taskId) {
+      if (task.style.display == 'none') {
+        task.style = 'display:grid'
+        continue
+      }
+      else {
+        task.style.display = "none"
+        continue
+      }
+    }
+    task.style = "display:none"
+  }
+  deleteTaskSelector()
+  dateChangeSelector()
+  priorityChangeSelector()
+  notesUpdateSelector()
 }
 
 function backToListPage(event) {
@@ -349,11 +406,7 @@ function doneUpdate(event) {
 function notesUpdateSelector() {
   const notes = document.querySelectorAll('.textNotes')
   for (const note of Array.from(notes)) {
-    note.addEventListener('keydown', event => {
-      if (event.target.value && event.keyCode === 13) {
-        notesUpdate(event)
-      }
-    })
+    note.addEventListener('change', notesUpdate)
   }
 }
 function notesUpdate(event) {
@@ -388,6 +441,36 @@ function priorityUpdate(event) {
     count++
   }
   todos[count].priority = event.target.value
+  todos.sort(function (a, b) {
+    a = new Date(a.date)
+    b = new Date(b.date)
+    const c = new Date(false)
+    if (a.getTime() == c.getTime() && b.getTime() != c.getTime()) {
+      return 1
+    }
+    else if (b.getTime() == c.getTime() && a.getTime() != c.getTime()) {
+      return -1
+    }
+    else if (b.getTime() == new Date(false) && a.getTime() == c.getTime()) {
+      return 0
+    }
+    return a < b ? -1 : a < b ? 1 : 0
+  })
+  todos.sort((a, b) => {
+    a = a.priority
+    b = b.priority
+    if (a === 'none') a = 0
+    else if (a === 'low') a = 1
+    else if (a === 'medium') a = 2
+    else a = 3
+    if (b === 'none') b = 0
+    else if (b === 'low') b = 1
+    else if (b === 'medium') b = 2
+    else b = 3
+    console.log(a)
+    console.log(b)
+    return a > b ? -1 : a < b ? 1 : 0
+  })
   list['todos'] = todos
   localStorage.setItem(`${listId}`, JSON.stringify(list))
 }
@@ -399,25 +482,60 @@ function dateChangeSelector() {
   }
 }
 function dateUpdate(event) {
-  const taskId = event.target.parentNode.parentNode.id
-  const listId = taskId.slice(0, taskId.indexOf('|'))
-  const list = JSON.parse(localStorage.getItem(`${listId}`))
-  let todos = list.todos
-  let count = 0
-  for (const todo of todos) {
-    if (todo.tId === taskId) break
-    count++
+  if (event.target.value) {
+    const taskId = event.target.parentNode.parentNode.id
+    const listId = taskId.slice(0, taskId.indexOf('|'))
+    const list = JSON.parse(localStorage.getItem(`${listId}`))
+    let todos = list.todos
+    let count = 0
+    for (const todo of todos) {
+      if (todo.tId === taskId) break
+      count++
+    }
+    todos[count].date = event.target.value
+    todos.sort(function (a, b) {
+      a = new Date(a.date)
+      b = new Date(b.date)
+      const c = new Date(false)
+      if (a.getTime() == c.getTime() && b.getTime() != c.getTime()) {
+        return 1
+      }
+      else if (b.getTime() == c.getTime() && a.getTime() != c.getTime()) {
+        return -1
+      }
+      else if (b.getTime() == new Date(false) && a.getTime() == c.getTime()) {
+        return 0
+      }
+      return a < b ? -1 : a < b ? 1 : 0
+    })
+    todos.sort((a, b) => {
+      a = a.priority
+      b = b.priority
+      if (a === 'none') a = 0
+      else if (a === 'low') a = 1
+      else if (a === 'medium') a = 2
+      else a = 3
+      if (b === 'none') b = 0
+      else if (b === 'low') b = 1
+      else if (b === 'medium') b = 2
+      else b = 3
+      console.log(a)
+      console.log(b)
+      return a > b ? -1 : a < b ? 1 : 0
+
+    })
+
+    list['todos'] = todos
+    localStorage.setItem(`${listId}`, JSON.stringify(list))
   }
-  todos[count].date = event.target.value
-  list['todos'] = todos
-  localStorage.setItem(`${listId}`, JSON.stringify(list))
 }
 
 function deleteTaskSelector() {
-  const deleteTaskButton = document.querySelectorAll('.deleteTask')
-  for (let task of Array.from(deleteTaskButton)) {
-    task.addEventListener('click', deleteTask)
-  }
+  const deleteTaskButton = document.querySelector('.deleteTask')
+  // for (let task of Array.from(deleteTaskButton)) {
+  //   task.addEventListener('click', deleteTask)
+  // }
+  deleteTaskButton.addEventListener('click', deleteTask)
 }
 
 function deleteTask(event) {
@@ -437,11 +555,8 @@ function deleteTask(event) {
   localStorage.setItem(`${listId}`, JSON.stringify(list))
 }
 
-// delete for list add fontawsome and implement
-// ptaskselector
-// divtaskselector
-// on click open task features
 // pOnHover
 // ponclick to textbox
 // on enter update name and back to p tag
-// 
+// complete done features
+// do sorting of tasks

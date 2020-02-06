@@ -33,18 +33,18 @@ body {
 }
 .listName {
   font-family: 'Times New Roman', Times, serif;
+  margin-left: 10px;
   overflow: hidden;
   width: 125px;
+  display: inline;
+}
+.fas{
+  margin-top: 10px;
+  margin-left: 10px;
 }
 .tasksInside {
   margin-top: 0px;
   margin-bottom: 0px;
-}
-.footer {
-  position: absolute;
-  /* margin-top: 60%; */
-  background-color: rgb(44, 42, 42);
-  /* margin-bottom: 0px; */
 }
 .listPage {
   /* display:none */
@@ -65,17 +65,21 @@ body {
 }
 .task {
   display: flex;
+  justify-content: space-around;
 }
 .checkbox {
   margin: 10px;
 }
 .taskName {
   margin: 7.5px 0;
+  min-width: 370px;
+  max-width: 370px;
+  overflow: hidden;
 }
 .taskFeatures {
   margin: 20px;
   padding-bottom: 20px;
-  display: grid;
+  /* display: grid; */
   grid-column-gap: 20px;
   display: none;
   /* justify-content: space-around; */
@@ -115,4 +119,22 @@ body {
 }
 textarea {
   resize: none;
+}
+.openTaskFeaturesBtn{
+  /* margin-top: 10px; */
+  width: 20px;
+  height: 20px;
+  align-self: center;
+  /* display: none; */
+}
+.openTaskFeaturesBtn:hover {
+  /* background-color: rgb(154, 185, 154); */
+  font-size: 150%
+}
+.hr{
+  border: 1px solid red
+}
+.taskName:hover{
+  border: black
+  border-radius: 10px
 }
