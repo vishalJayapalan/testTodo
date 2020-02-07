@@ -14,6 +14,11 @@ body {
 .center {
   display: flex;
 }
+.add{
+  margin-top: 20px;
+  margin-left: 30%;
+  width: 40%;
+}
 .listItemsContainer {
   display: flex;
   flex-wrap: wrap;
@@ -131,9 +136,9 @@ textarea {
   /* background-color: rgb(154, 185, 154); */
   font-size: 150%
 }
-/* .fas:hover{
-  font-size: 150%;
-} */
+  .fas:hover{
+    font-size: 150%;
+  }
 .hr{
   border: 1px solid green
 }
