@@ -131,8 +131,11 @@ textarea {
   /* background-color: rgb(154, 185, 154); */
   font-size: 150%
 }
+/* .fas:hover{
+  font-size: 150%;
+} */
 .hr{
-  border: 1px solid red
+  border: 1px solid green
 }
 .taskName:hover{
   border: black

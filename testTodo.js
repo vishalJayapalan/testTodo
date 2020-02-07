@@ -1,6 +1,7 @@
 const listPage = document.querySelector('.listPage')
 const listContainer = document.querySelector('.listItemsContainer')
 const newListButton = document.querySelector('.newListBtn')
+const addListContainer = document.querySelector('.addListContainer')
 
 const taskPage = document.querySelector('.taskPage')
 const taskContainer = document.querySelector('.taskContainer')
@@ -45,6 +46,9 @@ function listFromLocalStorage(lists) {
 
 function createList() {
   const listName = prompt('Enter List name')
+  // const addList = document.querySelector('.addList')
+  // addList.style.display = "block"
+  // addListContainer.appendChild(addList)
   if (listName) {
     count++
     const res = elt(
@@ -79,12 +83,9 @@ function deleteSelectorList() {
 }
 function deleteList(event) {
   const listId = event.target.id
-  // console.log(listId + " list id")
   const deleteElement = document.getElementById(`${listId}`)
   deleteElement.parentNode.removeChild(deleteElement)
-  // let list = JSON.parse(localStorage.getItem('todo'))
   list = list.filter(a => a != listId)
-  console.log(list)
   localStorage.removeItem(`${listId}`)
   localStorage.setItem('todo', JSON.stringify(list))
 }
@@ -112,7 +113,6 @@ function pSelectorList() {
     p.addEventListener('mousedown', event => {
       event.preventDefault()
       if (event.button === 0) {
-        // deleteListButtonEnabler(event)
         // openFromList(event)
       } else if (event.button === 2) {
         event.preventDefault()
@@ -253,8 +253,12 @@ function taskFromLocalStorage(event) {
 
   // pTaskNameOpener()
   featureOpenSelectorTask()
-  // pSelectorTask()
+  pTaskSelector()
   doneUpdateSelector()
+  // deleteTaskSelector()
+  // dateChangeSelector()
+  // priorityChangeSelector()
+  // notesUpdateSelector()
 }
 
 function addTask(event, listId) {
@@ -283,13 +287,13 @@ function addTask(event, listId) {
         id: `${listId}|${todoCount}`,
         className: `fas fa-angle-down openTaskFeaturesBtn ${listId}|${todoCount}`
       })
-    ),
+    ), elt('hr', { className: 'hr' }),
     elt(
       'div',
       {
         id: `${listId}|${todoCount}`,
         className: `taskFeatures ${listId}|${todoCount}`
-      }, elt('hr', {}),
+      },
       elt('p', {
         className: `notes ${listId}|${todoCount}`,
         textContent: 'Notes'
@@ -340,11 +344,36 @@ function addTask(event, listId) {
   localStorage.setItem(`${listId}`, JSON.stringify(list))
   doneUpdateSelector()
   featureOpenSelectorTask()
+  // deleteTaskSelector()
+  pTaskSelector()
+  // dateChangeSelector()
+  // priorityChangeSelector()
+  // notesUpdateSelector()
+
   // pSelectorTask()
   // pTaskNameOpener()
 }
 
 back.addEventListener('click', backToListPage)
+
+function pTaskSelector() {
+  const selectP = document.querySelectorAll('.taskName')
+  for (const p of Array.from(selectP)) {
+    p.addEventListener('click', renameTask)
+  }
+}
+function renameTask(event) {
+  let newName = prompt('Enter new task')
+  if (newName) {
+    const taskId = event.target.id
+    const selectP = document.querySelectorAll('.taskName')
+    for (const p of Array.from(selectP)) {
+      if (p.id == taskId) {
+        p.textContent = newName
+      }
+    }
+  }
+}
 
 function featureOpenSelectorTask() {
   const featureTask = document.querySelectorAll('.openTaskFeaturesBtn')
@@ -467,12 +496,11 @@ function priorityUpdate(event) {
     else if (b === 'low') b = 1
     else if (b === 'medium') b = 2
     else b = 3
-    console.log(a)
-    console.log(b)
     return a > b ? -1 : a < b ? 1 : 0
   })
   list['todos'] = todos
   localStorage.setItem(`${listId}`, JSON.stringify(list))
+  // taskFromLocalStorage(listId)
 }
 
 function dateChangeSelector() {
@@ -522,23 +550,23 @@ function dateUpdate(event) {
       console.log(a)
       console.log(b)
       return a > b ? -1 : a < b ? 1 : 0
-
     })
-
     list['todos'] = todos
     localStorage.setItem(`${listId}`, JSON.stringify(list))
   }
 }
 
 function deleteTaskSelector() {
-  const deleteTaskButton = document.querySelector('.deleteTask')
-  // for (let task of Array.from(deleteTaskButton)) {
-  //   task.addEventListener('click', deleteTask)
-  // }
-  deleteTaskButton.addEventListener('click', deleteTask)
+  const deleteTaskButton = document.querySelectorAll('.deleteTask')
+  for (let task of Array.from(deleteTaskButton)) {
+    task.addEventListener('click', deleteTask)
+    console.log(task)
+  }
+  // deleteTaskButton.addEventListener('click', deleteTask)
 }
 
 function deleteTask(event) {
+  console.log("yess")
   const taskId = event.target.parentNode.parentNode.id
   let element = document.getElementById(taskId)
   element.parentNode.removeChild(element)
