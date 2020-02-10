@@ -138,6 +138,8 @@ textarea {
 }
   .fas:hover{
     font-size: 150%;
+    border-color: black;
+    border-radius: 5px;
   }
 .hr{
   border: 1px solid green
