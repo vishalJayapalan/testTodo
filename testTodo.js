@@ -5,7 +5,7 @@ const addListContainer = document.querySelector('.addListContainer')
 const searchButton = document.querySelector('.searchBtn')
 const scheduledButton = document.querySelector('.scheduledBtn')
 const todayButton = document.querySelector('.todayBtn')
-const listButton = document.querySelector('.listBtn')
+// const listButton = document.querySelector('.listBtn')
 
 const taskPage = document.querySelector('.taskPage')
 const taskContainer = document.querySelector('.taskContainer')
@@ -26,32 +26,81 @@ clearCompleted.addEventListener('click', event => {
 let list = JSON.parse(localStorage.getItem('todo')) || []
 let count = list.length ? Number(list[list.length - 1]) : 0
 let todoCount
-listButton.addEventListener('click', event => {
-  listContainer.innerHTML = ''
-  listFromLocalStorage(list)
-})
+// listButton.addEventListener('click', event => {
+//   listContainer.innerHTML = ''
+//   listFromLocalStorage(list)
+// })
 
-function showTodayList () {}
-
-// showScheduledList on progress
-function showScheduledList () {
+function showTodayList () {
   const tasksToShow = []
-  const listsToShow = []
-  console.log(list)
+  const today = new Date()
   for (const lists of list) {
     const schList = JSON.parse(localStorage.getItem(`${lists}`))
     if (schList['todos'].length) {
-      console.log(schList)
       for (const schTodos of schList['todos']) {
-        if (schTodos.date !== false) {
-          listsToShow.push(schList.id)
-          tasksToShow.push({ list: schList.id, todo: schTodos.tId })
+        if (
+          new Date(schTodos.date).toISOString().slice(0, 10) ===
+          today.toISOString().slice(0, 10)
+        ) {
+          tasksToShow.push({
+            tId: schTodos.tId,
+            checked: schTodos.checked,
+            tName: schTodos.tName,
+            priority: schTodos.priority,
+            date: schTodos.date,
+            notes: schTodos.notes
+          })
         }
       }
     }
   }
-  console.log(listsToShow)
-  console.log(tasksToShow)
+  taskContainer.innerHTML = ''
+  listPage.style = 'display:none'
+  taskPage.style = 'display:block'
+  if (tasksToShow.length) {
+    taskCreatorFunction(tasksToShow, true)
+    featureOpenSelectorTask()
+    pTaskSelector()
+    doneUpdateSelector()
+  } else {
+    const nothing = document.createElement('p')
+    taskContainer.appendChild(nothing)
+    nothing.textContent = 'No Tasks For today'
+  }
+}
+
+function showScheduledList () {
+  const tasksToShow = []
+  for (const lists of list) {
+    const schList = JSON.parse(localStorage.getItem(`${lists}`))
+    if (schList['todos'].length) {
+      for (const schTodos of schList['todos']) {
+        if (schTodos.date !== false) {
+          tasksToShow.push({
+            tId: schTodos.tId,
+            checked: schTodos.checked,
+            tName: schTodos.tName,
+            priority: schTodos.priority,
+            date: schTodos.date,
+            notes: schTodos.notes
+          })
+        }
+      }
+    }
+  }
+  taskContainer.innerHTML = ''
+  listPage.style = 'display:none'
+  taskPage.style = 'display:block'
+  if (tasksToShow.length) {
+    taskCreatorFunction(tasksToShow, true)
+    featureOpenSelectorTask()
+    pTaskSelector()
+    doneUpdateSelector()
+  } else {
+    const nothing = document.createElement('p')
+    taskContainer.appendChild(nothing)
+    nothing.textContent = 'No Tasks Scheduled'
+  }
 }
 
 function elt (type, props, ...children) {
@@ -61,7 +110,7 @@ function elt (type, props, ...children) {
     if (typeof child !== 'string') dom.appendChild(child)
     else dom.appendChild(document.createTextNode(child))
   }
-  doneUpdateSelector
+  // doneUpdateSelector
   return dom
 }
 
@@ -276,9 +325,7 @@ function openFromList (listId) {
 }
 
 function taskCreatorFunction (lTodos, fromLocal = false) {
-  // console.log(lTodos[0].tId.slice(0))
   const listId = lTodos[0].tId.slice(0, lTodos[0].tId.indexOf('|'))
-  // console.log(listId)
   const taskName = lTodos[0].tName
   for (const todo of lTodos) {
     const div = elt(
@@ -302,7 +349,7 @@ function taskCreatorFunction (lTodos, fromLocal = false) {
           className: `fas fa-angle-down openTaskFeaturesBtn ${todo.tId}`
         })
       ),
-      elt('hr', { className: 'hr' }),
+      elt('hr', { id: `${todo.tId}`, className: 'hr' }),
       elt(
         'div',
         {
@@ -337,16 +384,16 @@ function taskCreatorFunction (lTodos, fromLocal = false) {
             name: 'priority',
             className: `prioritySelect ${todo.tId}`
           },
-          elt('option', { value: 'none', textContent: 'None' }),
+          elt('option', { value: '0', textContent: 'None' }),
           elt('option', {
-            value: 'low',
+            value: '1',
             textContent: 'Low'
           }),
           elt('option', {
-            value: 'medium',
+            value: '2',
             textContent: 'Medium'
           }),
-          elt('option', { value: 'high', textContent: 'High' })
+          elt('option', { value: '3', textContent: 'High' })
         ),
         elt('button', {
           className: `deleteTask ${todo.tId}`,
@@ -357,38 +404,39 @@ function taskCreatorFunction (lTodos, fromLocal = false) {
     if (fromLocal) {
       taskContainer.appendChild(div)
       const priority = document.querySelectorAll('.prioritySelect')
-      let num = `${todo.priority}`
-      if (num === 'none') num = 0
-      else if (num === 'low') num = 1
-      else if (num === 'medium') num = 2
-      else num = 3
+      const num = todo.priority
+      // console.log(typeof num)
       const priorities = priority[priority.length - 1]
       priorities.selectedIndex = num
+      let requiredHr
+      const hrs = document.querySelectorAll('.hr')
+      for (const hr of hrs) {
+        if (hr.id === todo.tId) {
+          requiredHr = hr
+          break
+        }
+      }
+      const priorityColor = [
+        'border: 1px solid yellow',
+        'border: 1px solid green',
+        'border: 1px solid blue',
+        'border: 1px solid red'
+      ]
+      // console.log(priorityColor)
+      requiredHr.style = priorityColor[num]
       todoCount = `${todo.tId}`
       todoCount = Number(todoCount.slice(todoCount.indexOf('|') + 1))
       if (todo.checked) {
-        let taskNameP = document.querySelectorAll('.taskName')
+        const taskNameP = document.querySelectorAll('.taskName')
         for (const task of Array.from(taskNameP)) {
-          if (task.id == todo.tId) {
+          if (task.id === todo.tId) {
             task.style = 'text-decoration: line-through'
           }
         }
-        // const taskNameP = document.querySelectorAll('.taskName')
-        // for (const task of Array.from(taskNameP)) {
-        //   if (task.id == todo.tId) {
-        //     const content = task.textContent
-        //     task.textContent = ''
-        //     const strike = document.createElement('strike')
-        //     task.appendChild(strike)
-        //     strike.textContent = content
-        //   }
-        // }
       }
     } else {
       taskContainer.appendChild(div)
-      console.log(listId)
       const list = JSON.parse(localStorage.getItem(`${listId}`))
-      console.log(list)
       list['todos'].push({
         tId: div.id,
         checked: false,
@@ -534,7 +582,7 @@ function doneUpdate (event) {
   if (event.target.checked) {
     let taskNameP = document.querySelectorAll('.taskName')
     for (const task of Array.from(taskNameP)) {
-      if (task.id == taskId) {
+      if (task.id === taskId) {
         task.style = 'text-decoration: line-through'
       }
     }
@@ -560,14 +608,6 @@ function prioritySorting (array) {
   array.sort((a, b) => {
     a = a.priority
     b = b.priority
-    if (a === 'none') a = 0
-    else if (a === 'low') a = 1
-    else if (a === 'medium') a = 2
-    else a = 3
-    if (b === 'none') b = 0
-    else if (b === 'low') b = 1
-    else if (b === 'medium') b = 2
-    else b = 3
     return a > b ? -1 : a < b ? 1 : 0
   })
   return array
@@ -578,13 +618,13 @@ function dateSorting (array) {
     a = new Date(a.date)
     b = new Date(b.date)
     const c = new Date(false)
-    if (a.getTime() == c.getTime() && b.getTime() != c.getTime()) {
+    if (a.getTime() === c.getTime() && b.getTime() !== c.getTime()) {
       return 1
     }
-    if (b.getTime() == c.getTime() && a.getTime() != c.getTime()) {
+    if (b.getTime() === c.getTime() && a.getTime() !== c.getTime()) {
       return -1
     }
-    if (b.getTime() == new Date(false) && a.getTime() == c.getTime()) {
+    if (b.getTime() === new Date(false) && a.getTime() === c.getTime()) {
       return 0
     }
     return a < b ? -1 : a < b ? 1 : 0
@@ -604,7 +644,6 @@ function checkedSorting (array) {
 }
 
 function clearCompletedTask (tId) {
-  console.log(tId)
   const lists = JSON.parse(localStorage.getItem(`${tId}`))
   let todos = lists.todos
   todos = todos.filter(a => a.checked === false)
@@ -712,8 +751,3 @@ function deleteTask (event) {
   list.todos = todos
   localStorage.setItem(`${listId}`, JSON.stringify(list))
 }
-
-// pOnHover
-// ponclick to textbox
-// on enter update name and back to p tag
-// complete done features
