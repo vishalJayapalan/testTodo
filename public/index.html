@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+    <title>testingTodo tasks</title>
+    <script
+      src="https://kit.fontawesome.com/105ecd73c7.js"
+      crossorigin="anonymous"
+    ></script>
+    <link rel="stylesheet" href="testTodo.css" />
+  </head>
+
+  <body>
+    <main class="listPage">
+      <nav class="navbar">
+        <button class="btn newListBtn">New List</button>
+        <div class="center">
+          <!-- <button class="btn listBtn">List</button> -->
+          <button class="btn todayBtn">Today</button>
+          <button class="btn scheduledBtn">Scheduled</button>
+        </div>
+        <button class="btn searchBtn">Search</button>
+      </nav>
+      <div class="addListContainer searchListContainer">
+        <input type="text" class="addList add" style="display:none" />
+        <input type="text" class="searchList add" style="display:none" />
+      </div>
+      <div class="listItemsContainer"></div>
+    </main>
+    <main class="taskPage">
+      <nav class="navbar">
+        <button class="btn backButton">Back</button>
+        <button class="btn clearCompletedBtn">Clear Completed</button>
+        <!-- should add the list name -->
+      </nav>
+      <div class="taskContainer"></div>
+    </main>
+    <script src="testTodo.js"></script>
+  </body>
+</html>

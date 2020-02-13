@@ -24,6 +24,7 @@ clearCompleted.addEventListener('click', event => {
 // localStorage.clear()
 
 let list = JSON.parse(localStorage.getItem('todo')) || []
+
 let count = list.length ? Number(list[list.length - 1]) : 0
 let todoCount
 // listButton.addEventListener('click', event => {
@@ -405,7 +406,6 @@ function taskCreatorFunction (lTodos, fromLocal = false) {
       taskContainer.appendChild(div)
       const priority = document.querySelectorAll('.prioritySelect')
       const num = todo.priority
-      // console.log(typeof num)
       const priorities = priority[priority.length - 1]
       priorities.selectedIndex = num
       let requiredHr
@@ -422,7 +422,6 @@ function taskCreatorFunction (lTodos, fromLocal = false) {
         'border: 1px solid blue',
         'border: 1px solid red'
       ]
-      // console.log(priorityColor)
       requiredHr.style = priorityColor[num]
       todoCount = `${todo.tId}`
       todoCount = Number(todoCount.slice(todoCount.indexOf('|') + 1))
@@ -441,7 +440,7 @@ function taskCreatorFunction (lTodos, fromLocal = false) {
         tId: div.id,
         checked: false,
         tName: `${taskName}`,
-        priority: 'none',
+        priority: 0,
         date: false,
         notes: ''
       })
