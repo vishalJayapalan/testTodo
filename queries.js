@@ -1,113 +1,154 @@
+require('dotenv').config()
 const Pool = require('pg').Pool
 const pool = new Pool({
-  user: 'postgres',
-  host: 'localhost',
-  database: 'postgres',
-  password: 'postgres',
-  port: 5432
+  user: process.env.DB_USER,
+  host: process.env.DB_HOST,
+  database: process.env.DB_DATABASE,
+  password: process.env.DB_PASS,
+  port: process.env.DB_PORT
 })
 
-const getLists = (request, response) => {
-  pool.query('SELECT * FROM lists ORDER BY id ASC', (error, results) => {
-    if (error) throw error
-    response.status(200).send(results.rows)
-  })
+const getLists = async (request, response) => {
+  try {
+    await pool.query(
+      'SELECT * FROM lists ORDER BY id ASC',
+      (error, results) => {
+        if (error) throw error
+        response.status(200).send(results.rows)
+      }
+    )
+  } catch (e) {
+    response.status(500).send(['unable to fetch data'])
+  }
 }
 
-const getListById = (request, response) => {
+const getListById = async (request, response) => {
   const id = request.params.id
-
-  pool.query(`SELECT * FROM lists WHERE id =${id}`, (error, results) => {
-    if (error) throw error
-    response.status(200).send(results.rows)
-  })
+  try {
+    await pool.query(
+      `SELECT * FROM lists WHERE id =${id}`,
+      (error, results) => {
+        if (error) throw error
+        response.status(200).send(results.rows)
+      }
+    )
+  } catch (e) {
+    response.status(500).send(['unable to fetch data'])
+  }
 }
 
-const createList = (request, response) => {
+const createList = async (request, response) => {
   const { name } = request.body
-  pool.query(
-    `INSERT INTO lists (name) VALUES ('${name}') RETURNING id`,
-    (error, results) => {
-      if (error) throw error
-      response.status(201).send(`List added with ID: ${results.rows[0].id}`)
-    }
-  )
+  try {
+    await pool.query(
+      `INSERT INTO lists (name) VALUES ('${name}') RETURNING id`,
+      (error, results) => {
+        if (error) throw error
+        response.status(201).send(results.rows[0].id.toString())
+      }
+    )
+  } catch (e) {
+    response.status(500).send(['unable to create data'])
+  }
 }
 
-const updateList = (request, response) => {
+const updateList = async (request, response) => {
   const id = request.params.id
   const { name } = request.body
-
-  pool.query(
-    `UPDATE lists SET name = '${name}' where id = ${id}`,
-    (error, results) => {
-      if (error) throw error
-      response.status(200).send(`List modified with ID: ${id}`)
-    }
-  )
+  try {
+    await pool.query(
+      `UPDATE lists SET name = '${name}' where id = ${id}`,
+      (error, results) => {
+        if (error) throw error
+        response.status(200).send([`List modified with ID: ${id}`])
+      }
+    )
+  } catch (e) {
+    response.status(500).send(['unable to update data'])
+  }
 }
 
-const deleteList = (request, response) => {
-  const id = parseInt(request.params.id)
-
-  pool.query(`DELETE FROM lists WHERE id = ${id}`, (error, results) => {
-    if (error) throw error
-    response.status(200).send(`List deleted with ID: ${id}`)
-  })
-}
-
-const getTasks = (request, response) => {
-  pool.query('SELECT * FROM tasks ORDER BY tid ASC', (error, results) => {
-    if (error) throw error
-    response.status(200).send(results.rows)
-  })
-}
-
-const createTask = (request, response) => {
-  const { name, checked, priority, date, notes, id } = request.body
-  pool.query(
-    `INSERT INTO tasks (checked,tName,priority,date,notes,id) VALUES ('${checked}','${name}','${priority}','${date}','${notes}','${id}') RETURNING tid`,
-    (error, results) => {
-      if (error) throw error
-      response
-        .status(201)
-        .send(
-          `Task added with ID: ${results.rows[0].tid} to list with ID:${id} `
-        )
-    }
-  )
-}
-
-const updateTask = (request, response) => {
-  const tid = request.params.tid
+const deleteList = async (request, response) => {
   const id = request.params.id
+  try {
+    await pool.query(`DELETE FROM lists WHERE id = ${id}`, (error, results) => {
+      if (error) throw error
+      response.status(200).send(['data deleted'])
+    })
+  } catch (e) {
+    response.status(500).send(['unable to delete data'])
+  }
+}
+
+const getTasks = async (request, response) => {
+  // console.log('getTASK')
+  const id = request.params.id
+  // console.log(id)
+  try {
+    await pool.query(
+      `SELECT * FROM tasks WHERE id = ${id} ORDER BY tid ASC`,
+      (error, results) => {
+        if (error) throw error
+        response.status(200).send(results.rows)
+      }
+    )
+  } catch (e) {
+    response.status(500).send(['unable to fetch tasks'])
+  }
+}
+
+const createTask = async (request, response) => {
+  const id = req.params.id
   const { name, checked, priority, date, notes } = request.body
-
-  pool.query(
-    `UPDATE tasks SET tname = '${name}',
-      checked = '${checked}',
-      priority = '${priority}',
-      date = '${date}',
-      notes = '${notes}'
-      where tid = ${tid}`,
-    (error, results) => {
-      if (error) throw error
-      response
-        .status(200)
-        .send(`Task with ID: ${tid} modified in list with ID: ${id}`)
-    }
-  )
+  try {
+    await pool.query(
+      `INSERT INTO tasks (checked,tName,priority,date,notes,id) VALUES ('${checked}','${name}','${priority}','${date}','${notes}','${id}') RETURNING tid`,
+      (error, results) => {
+        if (error) throw error
+        response.status(201).send(results.rows[0].tid.toString())
+      }
+    )
+  } catch (e) {
+    response.status(500).send(['unable to create task'])
+  }
 }
 
-const deleteTask = (request, response) => {
+const updateTask = async (request, response) => {
   const tid = request.params.tid
   const id = request.params.id
-  pool.query(`DELETE FROM tasks WHERE tid = ${tid}`, (error, results) => {
-    if (error) throw error
-    response
-      .status(200)
-      .send(`task deleted with ID: ${tid} of list with ID: ${id}`)
-  })
+  const column = request.body.column
+  const value = request.body.value
+  // const { name, checked, priority, date, notes } = request.body
+  try {
+    await pool.query(
+      `UPDATE tasks SET ${column} = '${value}'
+      where tid = ${tid}`,
+      (error, results) => {
+        if (error) throw error
+        response.status(200).send([`Task renamed`])
+      }
+    )
+  } catch (e) {
+    response.status(500).send(['unable to update task'])
+  }
+}
+
+const deleteTask = async (request, response) => {
+  const tid = request.params.tid
+  const id = request.params.id
+  try {
+    await pool.query(
+      `DELETE FROM tasks WHERE tid = ${tid}`,
+      (error, results) => {
+        if (error) throw error
+        response
+          .status(200)
+          .send([`task deleted with ID: ${tid} of list with ID: ${id}`])
+      }
+    )
+  } catch (e) {
+    response.status(500).send(['unable to delete task'])
+  }
 }
 
 module.exports = {

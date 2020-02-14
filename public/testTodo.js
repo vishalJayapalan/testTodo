@@ -23,13 +23,32 @@ clearCompleted.addEventListener('click', event => {
 })
 // localStorage.clear()
 
-let list = JSON.parse(localStorage.getItem('todo')) || []
+async function dbReq (url, data, method) {
+  const response = await window.fetch('http://localhost:3000/' + url, {
+    method: method,
+    body: JSON.stringify(data),
+    headers: {
+      'Content-Type': 'application/json'
+    }
+  })
+  // console.log('whyyyy')
+  returnVal = await response.json()
+  // console.log(returnVal)
+  return returnVal
+}
 
-let count = list.length ? Number(list[list.length - 1]) : 0
+// let list = JSON.parse(localStorage.getItem('todo')) || []
+let list = []
+
+async function listArrayCreatorFunction () {
+  let listResponse = await window.fetch('http://localhost:3000/lists')
+  list = await listResponse.json()
+}
+let count
 let todoCount
 // listButton.addEventListener('click', event => {
 //   listContainer.innerHTML = ''
-//   listFromLocalStorage(list)
+//   listsFromDb(list)
 // })
 
 function showTodayList () {
@@ -44,7 +63,7 @@ function showTodayList () {
           today.toISOString().slice(0, 10)
         ) {
           tasksToShow.push({
-            tId: schTodos.tId,
+            tid: schTodos.tid,
             checked: schTodos.checked,
             tName: schTodos.tName,
             priority: schTodos.priority,
@@ -78,7 +97,7 @@ function showScheduledList () {
       for (const schTodos of schList['todos']) {
         if (schTodos.date !== false) {
           tasksToShow.push({
-            tId: schTodos.tId,
+            tid: schTodos.tid,
             checked: schTodos.checked,
             tName: schTodos.tName,
             priority: schTodos.priority,
@@ -114,24 +133,32 @@ function elt (type, props, ...children) {
   // doneUpdateSelector
   return dom
 }
+// console.log(list.length)
+listsFromDb()
 
-if (list.length) listFromLocalStorage(list)
-
-function listFromLocalStorage (lists) {
-  for (const list of lists) {
-    const cnt = JSON.parse(localStorage.getItem(`${list}`))
-    const res = elt(
-      'div',
-      { id: list, className: 'listItems' },
-      elt('div', { id: list, className: 'lists' }),
-      elt('i', { id: list, className: 'fas fa-archive' }),
-      elt('p', { id: list, className: 'listName', textContent: cnt.name })
-    ) // check with id
-    listContainer.appendChild(res)
+async function listsFromDb () {
+  await listArrayCreatorFunction()
+  if (list.length) {
+    for (const listById of list) {
+      // const cnt = JSON.parse(localStorage.getItem(`${list.id}`))
+      console.log(listById.id)
+      const res = elt(
+        'div',
+        { id: listById.id, className: 'listItems' },
+        elt('div', { id: listById.id, className: 'lists' }),
+        elt('i', { id: listById.id, className: 'fas fa-archive' }),
+        elt('p', {
+          id: listById.id,
+          className: 'listName',
+          textContent: listById.name
+        })
+      ) // check with id
+      listContainer.appendChild(res)
+    }
+    deleteSelectorList()
+    divSelectorList()
+    pSelectorList()
   }
-  deleteSelectorList()
-  divSelectorList()
-  pSelectorList()
 }
 
 function searchListCreator () {
@@ -146,7 +173,7 @@ function searchListCreator () {
     listContainer.style.display = 'flex'
     searchButton.disabled = false
     listContainer.innerHTML = ''
-    listFromLocalStorage(list)
+    listsFromDb(list)
   })
   searchList.addEventListener('keyup', event => {
     let tempList = []
@@ -159,7 +186,7 @@ function searchListCreator () {
       }
     }
     listContainer.innerHTML = ''
-    listFromLocalStorage(tempList)
+    listsFromDb(tempList)
     if (event.keyCode === 13) {
       event.target.value = ''
       searchList.style.display = 'none'
@@ -193,9 +220,10 @@ function listInput () {
   })
 }
 
-function createList (listName) {
+async function createList (listName) {
   if (listName) {
-    count++
+    let unknown = await dbReq('lists', { name: listName }, 'POST')
+    count = unknown
     const res = elt(
       'div',
       {
@@ -207,12 +235,14 @@ function createList (listName) {
       elt('p', { id: count, className: 'listName', innerText: listName })
     )
     listContainer.appendChild(res)
-    list.push(res.id)
-    localStorage.setItem(
-      `${res.id}`,
-      JSON.stringify({ id: res.id, name: listName, todos: [] })
-    )
-    localStorage.setItem('todo', JSON.stringify(list))
+    list.push({ id: count, name: listName })
+    // console.log(list)
+
+    // localStorage.setItem(
+    //   `${res.id}`,
+    //   JSON.stringify({ id: res.id, name: listName, todos: [] })
+    // )
+    // localStorage.setItem('todo', JSON.stringify(list))
     deleteSelectorList()
     pSelectorList()
     divSelectorList()
@@ -226,12 +256,15 @@ function deleteSelectorList () {
   }
 }
 function deleteList (event) {
-  const listId = event.target.id
-  const deleteElement = document.getElementById(`${listId}`)
+  const listid = event.target.id
+  const deleteElement = document.getElementById(`${listid}`)
   deleteElement.parentNode.removeChild(deleteElement)
-  list = list.filter(a => a != listId)
-  localStorage.removeItem(`${listId}`)
-  localStorage.setItem('todo', JSON.stringify(list))
+  // console.log(listid)
+  list = list.filter(a => a.id != listid)
+  // console.log(listid)
+  dbReq(`lists/${listid}/`, {}, 'DELETE')
+  // localStorage.removeItem(`${listid}`)
+  // localStorage.setItem('todo', JSON.stringify(list))
 }
 
 function divSelectorList () {
@@ -267,16 +300,16 @@ function pSelectorList () {
 }
 
 function renameInput (event) {
-  const listId = event.target.id
+  const listid = event.target.id
   const listClass = event.target.className
   const newInput = elt('input', {
-    id: `${listId}`,
+    id: `${listid}`,
     className: `${listClass}`,
     value: `${event.target.textContent}`
   })
   const listName = document.querySelectorAll(`.${listClass}`)
   for (const list of Array.from(listName)) {
-    if (list.id === listId) {
+    if (list.id === listid) {
       list.parentNode.replaceChild(newInput, list)
       newInput.focus()
       newInput.addEventListener('keydown', event => {
@@ -290,23 +323,27 @@ function renameInput (event) {
 }
 
 function renameList (event) {
-  const listId = event.target.id
+  const listid = event.target.id
+  // console.log(listid)
   const listClass = event.target.className
+  // console.log(listClass)
   const newName = event.target.value
-  const list = JSON.parse(localStorage.getItem(`${listId}`))
+  // console.log(newName)
+  // const list = JSON.parse(localStorage.getItem(`${listid}`))
+  dbReq(`lists/${listid}/`, { name: newName }, 'PUT')
   const listName = document.querySelectorAll(`.${listClass}`)
   for (const lists of Array.from(listName)) {
-    if (lists.id === `${listId}`) lists.textContent = newName
+    if (lists.id === `${listid}`) lists.textContent = newName
   }
-  list['name'] = newName
-  localStorage.setItem(`${listId}`, JSON.stringify(list))
+  // list['name'] = newName
+  // localStorage.setItem(`${listid}`, JSON.stringify(list))
 }
 
 function selectList () {
   console.log('Work in Progress')
 }
 
-function openFromList (listId) {
+function openFromList (listid) {
   listPage.style = 'display:none'
   taskPage.style = 'display:block'
   taskContainer.innerHTML = ''
@@ -317,73 +354,77 @@ function openFromList (listId) {
   })
   taskContainer.appendChild(input)
   const taskInput = document.querySelector('.taskInput')
-  taskFromLocalStorage(listId) // changed here for TaskFromLocalStorage
+  taskFromLocalStorage(listid) // changed here for TaskFromLocalStorage
   taskInput.addEventListener('keydown', event => {
     if (event.target.value && event.keyCode === 13) {
-      addTask(event, listId)
+      addTask(event, listid)
     }
   })
 }
 
 function taskCreatorFunction (lTodos, fromLocal = false) {
-  const listId = lTodos[0].tId.slice(0, lTodos[0].tId.indexOf('|'))
+  // const listid = lTodos[0].tid.slice(0, lTodos[0].tid.indexOf('|'))
+  // console.log('inCreateFunction')
+  // console.log(lTodos)
   const taskName = lTodos[0].tName
   for (const todo of lTodos) {
+    // console.log(todo)
+    // console.log(todo.tid)
     const div = elt(
       'div',
-      { id: todo.tId, className: 'taskFull' },
+      { id: todo.tid, className: 'taskFull' },
       elt(
         'div',
-        { className: `task ${todo.tId}` },
+        { className: `task ${todo.tid}` },
         elt('input', {
           type: 'checkbox',
-          className: `checkbox ${todo.tId}`,
+          className: `checkbox ${todo.tid}`,
           checked: todo.checked || false
         }),
         elt('p', {
-          id: `${todo.tId}`,
-          className: `taskName ${todo.tId}`,
-          textContent: todo.tName
+          id: `${todo.tid}`,
+          className: `taskName ${todo.tid}`,
+          textContent: todo.tname
         }),
         elt('i', {
-          id: `${todo.tId}`,
-          className: `fas fa-angle-down openTaskFeaturesBtn ${todo.tId}`
+          id: `${todo.tid}`,
+          className: `fas fa-angle-down openTaskFeaturesBtn ${todo.tid}`
         })
       ),
-      elt('hr', { id: `${todo.tId}`, className: 'hr' }),
+      elt('hr', { id: `${todo.tid}`, className: 'hr' }),
       elt(
         'div',
         {
-          id: `${todo.tId}`,
+          id: `${todo.tid}`,
           className: 'taskFeatures'
         },
         elt('p', {
-          className: `notes ${todo.tId}`,
+          className: `notes ${todo.tid}`,
           textContent: 'Notes'
         }),
         elt('p', {
-          className: `dueDate ${todo.tId}`,
+          className: `dueDate ${todo.tid}`,
           textContent: 'Due Date'
         }),
         elt('textarea', {
-          className: `textNotes ${todo.tId}`,
+          className: `textNotes ${todo.tid}`,
           name: 'notes',
           value: `${todo.notes}` || ''
         }),
         elt('input', {
           type: 'date',
-          className: `date ${todo.tId}`,
+          className: `date ${todo.tid}`,
           value: `${todo.date}`
         }),
         elt('p', {
-          className: `priority ${todo.tId}`,
+          className: `priority ${todo.tid}`,
           textContent: 'Priority'
         }),
         elt(
           'select',
           {
             name: 'priority',
-            className: `prioritySelect ${todo.tId}`
+            className: `prioritySelect ${todo.tid}`
           },
           elt('option', { value: '0', textContent: 'None' }),
           elt('option', {
@@ -397,7 +438,7 @@ function taskCreatorFunction (lTodos, fromLocal = false) {
           elt('option', { value: '3', textContent: 'High' })
         ),
         elt('button', {
-          className: `deleteTask ${todo.tId}`,
+          className: `deleteTask ${todo.tid}`,
           textContent: 'Delete'
         })
       )
@@ -411,7 +452,10 @@ function taskCreatorFunction (lTodos, fromLocal = false) {
       let requiredHr
       const hrs = document.querySelectorAll('.hr')
       for (const hr of hrs) {
-        if (hr.id === todo.tId) {
+        // console.log(hr)
+        // console.log(hr.id)
+        // console.log(todo.tid)
+        if (hr.id == todo.tid) {
           requiredHr = hr
           break
         }
@@ -422,40 +466,51 @@ function taskCreatorFunction (lTodos, fromLocal = false) {
         'border: 1px solid blue',
         'border: 1px solid red'
       ]
+      // console.log(requiredHr)
       requiredHr.style = priorityColor[num]
-      todoCount = `${todo.tId}`
-      todoCount = Number(todoCount.slice(todoCount.indexOf('|') + 1))
+      // todoCount = `${todo.tid}`
+      // todoCount = Number(todoCount.slice(todoCount.indexOf('|') + 1))
       if (todo.checked) {
         const taskNameP = document.querySelectorAll('.taskName')
         for (const task of Array.from(taskNameP)) {
-          if (task.id === todo.tId) {
+          if (task.id === todo.tid) {
             task.style = 'text-decoration: line-through'
           }
         }
       }
     } else {
       taskContainer.appendChild(div)
-      const list = JSON.parse(localStorage.getItem(`${listId}`))
+      // const list = JSON.parse(localStorage.getItem(`${listid}`))
       list['todos'].push({
-        tId: div.id,
+        tid: div.id,
         checked: false,
         tName: `${taskName}`,
         priority: 0,
         date: false,
         notes: ''
       })
-      localStorage.setItem(`${listId}`, JSON.stringify(list))
+      // localStorage.setItem(`${listid}`, JSON.stringify(list))
     }
   }
 }
 
-function taskFromLocalStorage (listId) {
-  clearCompleted.id = listId // comment this and open above line // changed event
-  const taskList = JSON.parse(localStorage.getItem(`${listId}`)) // comment this and open above line
-  const lTodos = taskList.todos
+async function taskFromLocalStorage (listid) {
+  clearCompleted.id = listid // comment this and open above line // changed event
+  // console.log(listid)
+  // console.log('frontEnd')
+  // const taskList = JSON.parse(localStorage.getItem(`${listid}`)) // comment this and open above line
+  // dbReq(`lists/${listid}/tasks/`, {}, 'PUT')
+
+  let taskResponse = await window.fetch(
+    `http://localhost:3000/lists/${listid}/tasks`
+  )
+  // console.log(taskResponse)
+  tasks = await taskResponse.json()
+  // console.log(tasks)
+  // const lTodos = taskList.todos
   todoCount = 0
-  if (lTodos.length) {
-    taskCreatorFunction(lTodos, true)
+  if (tasks.length) {
+    taskCreatorFunction(tasks, true)
   }
 
   featureOpenSelectorTask()
@@ -463,69 +518,75 @@ function taskFromLocalStorage (listId) {
   doneUpdateSelector()
 }
 
-function addTask (event, listId) {
+function addTask (event, listid) {
   const taskName = event.target.value // required for updating in localStorage
   event.target.value = ''
   todoCount++
-  const lTodos = [{ tId: `${listId}|${todoCount}`, tName: `${taskName}` }]
+  const lTodos = [{ tid: `${listid}|${todoCount}`, tName: `${taskName}` }]
   taskCreatorFunction(lTodos, false)
   // above is for adding task
   doneUpdateSelector()
   featureOpenSelectorTask()
-  pTaskSelector()
+  pTaskSelector(listid)
 }
 
 back.addEventListener('click', backToListPage)
 
-function pTaskSelector () {
+function pTaskSelector (listid) {
   const selectP = document.querySelectorAll('.taskName')
   for (const p of Array.from(selectP)) {
-    p.addEventListener('click', renameTaskInput)
+    p.addEventListener('click', event => renameTaskInput(event, listid))
   }
 }
 
-function renameTaskInput (event) {
-  const taskId = event.target.id
+function renameTaskInput (event, listid) {
+  const tid = event.target.id
   const taskClass = event.target.className
   const newInput = elt('input', {
-    id: `${taskId}`,
+    id: `${tid}`,
     className: `${taskClass}`,
     value: `${event.target.textContent}`,
     type: 'text'
   })
   const taskName = document.querySelectorAll('.taskName')
   for (const task of Array.from(taskName)) {
-    if (task.id === taskId) {
+    if (task.id == tid) {
       task.parentNode.replaceChild(newInput, task)
       newInput.focus()
       newInput.addEventListener('keydown', event => {
         if (event.target.value && event.keyCode === 13) {
           newInput.parentNode.replaceChild(task, newInput)
-          renameTask(event)
+          renameTask(event, listid)
         }
       })
     }
   }
 }
 
-function renameTask (event) {
-  const taskId = event.target.id
+function renameTask (event, listid) {
+  const tid = event.target.id
   const newName = event.target.value
-  const listId = taskId.slice(0, taskId.indexOf('|'))
-  const list = JSON.parse(localStorage.getItem(`${listId}`))
-  const todos = list.todos
+  // const listid = tid.slice(0, tid.indexOf('|'))
+  // const list = JSON.parse(localStorage.getItem(`${listid}`))
+  // const todos = list.todos
+  // console.log(listid)
+  dbReq(
+    `lists/${listid}/tasks/${tid}/`,
+    { column: tname, value: newName },
+    'PUT'
+  )
   const taskName = document.querySelectorAll('.taskName')
   for (const tasks of Array.from(taskName)) {
-    if (tasks.id === `${taskId}`) tasks.textContent = newName
+    if (tasks.id == `${tid}`) tasks.textContent = newName
   }
   let count = 0
   for (const todo of todos) {
-    if (todo.tId === taskId) break
+    if (todo.tid == tid) break
     count++
   }
   todos[count].tName = newName
-  list.todos = todos
-  localStorage.setItem(`${listId}`, JSON.stringify(list))
+  // list.todos = todos
+  // localStorage.setItem(`${listid}`, JSON.stringify(list))
 }
 
 function featureOpenSelectorTask () {
@@ -535,10 +596,10 @@ function featureOpenSelectorTask () {
   }
 }
 function featureTaskOpener (event) {
-  let taskId = event.target.id
+  let tid = event.target.id
   const taskFeatures = document.querySelectorAll('.taskFeatures')
   for (const task of Array.from(taskFeatures)) {
-    if (task.id === taskId) {
+    if (task.id === tid) {
       if (task.style.display == 'none') {
         task.style = 'display:grid'
         continue
@@ -559,7 +620,7 @@ function backToListPage (event) {
   listPage.style = 'display:block'
   taskPage.style = 'display:none'
   listContainer.innerHTML = ''
-  listFromLocalStorage(list)
+  listsFromDb(list)
 }
 
 function doneUpdateSelector () {
@@ -569,26 +630,26 @@ function doneUpdateSelector () {
   }
 }
 function doneUpdate (event) {
-  const taskId = event.target.parentNode.parentNode.id
-  const listId = taskId.slice(0, taskId.indexOf('|'))
-  const list = JSON.parse(localStorage.getItem(`${listId}`))
+  const tid = event.target.parentNode.parentNode.id
+  const listid = tid.slice(0, tid.indexOf('|'))
+  const list = JSON.parse(localStorage.getItem(`${listid}`))
   let todos = list.todos
   let count = 0
   for (const todo of todos) {
-    if (todo.tId === taskId) break
+    if (todo.tid === tid) break
     count++
   }
   if (event.target.checked) {
     let taskNameP = document.querySelectorAll('.taskName')
     for (const task of Array.from(taskNameP)) {
-      if (task.id === taskId) {
+      if (task.id === tid) {
         task.style = 'text-decoration: line-through'
       }
     }
   } else {
     let taskNameP = document.querySelectorAll('.taskName')
     for (const task of Array.from(taskNameP)) {
-      if (task.id === taskId) {
+      if (task.id === tid) {
         task.style = 'text-decoration: underline;'
       }
     }
@@ -598,9 +659,9 @@ function doneUpdate (event) {
   todos = prioritySorting(todos)
   todos = checkedSorting(todos)
   list['todos'] = todos
-  localStorage.setItem(`${listId}`, JSON.stringify(list))
+  localStorage.setItem(`${listid}`, JSON.stringify(list))
   taskContainer.innerHTML = ''
-  openFromList(listId)
+  openFromList(listid)
 }
 
 function prioritySorting (array) {
@@ -642,14 +703,14 @@ function checkedSorting (array) {
   return array
 }
 
-function clearCompletedTask (tId) {
-  const lists = JSON.parse(localStorage.getItem(`${tId}`))
+function clearCompletedTask (tid) {
+  const lists = JSON.parse(localStorage.getItem(`${tid}`))
   let todos = lists.todos
   todos = todos.filter(a => a.checked === false)
   lists.todos = todos
-  localStorage.setItem(`${tId}`, JSON.stringify(lists))
+  localStorage.setItem(`${tid}`, JSON.stringify(lists))
   taskContainer.innerHTML = ''
-  openFromList(tId)
+  openFromList(tid)
 }
 
 function notesUpdateSelector () {
@@ -659,18 +720,18 @@ function notesUpdateSelector () {
   }
 }
 function notesUpdate (event) {
-  const taskId = event.target.parentNode.parentNode.id
-  const listId = taskId.slice(0, taskId.indexOf('|'))
-  const list = JSON.parse(localStorage.getItem(`${listId}`))
+  const tid = event.target.parentNode.parentNode.id
+  const listid = tid.slice(0, tid.indexOf('|'))
+  const list = JSON.parse(localStorage.getItem(`${listid}`))
   const todos = list.todos
   let count = 0
   for (const todo of todos) {
-    if (todo.tId === taskId) break
+    if (todo.tid === tid) break
     count++
   }
   todos[count].notes = event.target.value
   list['todos'] = todos
-  localStorage.setItem(`${listId}`, JSON.stringify(list))
+  localStorage.setItem(`${listid}`, JSON.stringify(list))
 }
 
 function priorityChangeSelector () {
@@ -680,13 +741,13 @@ function priorityChangeSelector () {
   }
 }
 function priorityUpdate (event) {
-  const taskId = event.target.parentNode.parentNode.id
-  const listId = taskId.slice(0, taskId.indexOf('|'))
-  const list = JSON.parse(localStorage.getItem(`${listId}`))
+  const tid = event.target.parentNode.parentNode.id
+  const listid = tid.slice(0, tid.indexOf('|'))
+  const list = JSON.parse(localStorage.getItem(`${listid}`))
   let todos = list.todos
   let count = 0
   for (const todo of todos) {
-    if (todo.tId === taskId) break
+    if (todo.tid === tid) break
     count++
   }
   todos[count].priority = event.target.value
@@ -694,9 +755,9 @@ function priorityUpdate (event) {
   todos = prioritySorting(todos)
   todos = checkedSorting(todos)
   list['todos'] = todos
-  localStorage.setItem(`${listId}`, JSON.stringify(list))
+  localStorage.setItem(`${listid}`, JSON.stringify(list))
   taskContainer.innerHTML = ''
-  openFromList(listId)
+  openFromList(listid)
 }
 
 function dateChangeSelector () {
@@ -707,13 +768,13 @@ function dateChangeSelector () {
 }
 function dateUpdate (event) {
   if (event.target.value) {
-    const taskId = event.target.parentNode.parentNode.id
-    const listId = taskId.slice(0, taskId.indexOf('|'))
-    const list = JSON.parse(localStorage.getItem(`${listId}`))
+    const tid = event.target.parentNode.parentNode.id
+    const listid = tid.slice(0, tid.indexOf('|'))
+    const list = JSON.parse(localStorage.getItem(`${listid}`))
     let todos = list.todos
     let count = 0
     for (const todo of todos) {
-      if (todo.tId === taskId) break
+      if (todo.tid === tid) break
       count++
     }
     todos[count].date = event.target.value
@@ -721,9 +782,9 @@ function dateUpdate (event) {
     todos = prioritySorting(todos)
     todos = checkedSorting(todos)
     list['todos'] = todos
-    localStorage.setItem(`${listId}`, JSON.stringify(list))
+    localStorage.setItem(`${listid}`, JSON.stringify(list))
     taskContainer.innerHTML = ''
-    openFromList(listId)
+    openFromList(listid)
   }
 }
 
@@ -735,18 +796,18 @@ function deleteTaskSelector () {
 }
 
 function deleteTask (event) {
-  const taskId = event.target.parentNode.parentNode.id
-  const element = document.getElementById(taskId)
+  const tid = event.target.parentNode.parentNode.id
+  const element = document.getElementById(tid)
   element.parentNode.removeChild(element)
-  const listId = taskId.slice(0, taskId.indexOf('|'))
-  const list = JSON.parse(localStorage.getItem(`${listId}`))
+  const listid = tid.slice(0, tid.indexOf('|'))
+  const list = JSON.parse(localStorage.getItem(`${listid}`))
   let todos = list.todos
   let count = 0
   for (const todo of todos) {
-    if (todo.tId === taskId) break
+    if (todo.tid === tid) break
     count++
   }
   todos = todos.slice(0, count).concat(todos.slice(count + 1))
   list.todos = todos
-  localStorage.setItem(`${listId}`, JSON.stringify(list))
+  localStorage.setItem(`${listid}`, JSON.stringify(list))
 }
