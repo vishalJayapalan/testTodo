@@ -98,13 +98,15 @@ const getTasks = async (request, response) => {
 }
 
 const createTask = async (request, response) => {
-  const id = req.params.id
-  const { name, checked, priority, date, notes } = request.body
+  const id = request.params.id
+  const { tname, checked, priority, date, notes } = request.body
   try {
     await pool.query(
-      `INSERT INTO tasks (checked,tName,priority,date,notes,id) VALUES ('${checked}','${name}','${priority}','${date}','${notes}','${id}') RETURNING tid`,
+      `INSERT INTO tasks (checked,tname,priority,date,notes,id) VALUES ('${checked}','${tname}','${priority}','${date}','${notes}','${id}') RETURNING tid`,
       (error, results) => {
         if (error) throw error
+        console.log('result')
+        console.log(results.rows)
         response.status(201).send(results.rows[0].tid.toString())
       }
     )
@@ -118,6 +120,7 @@ const updateTask = async (request, response) => {
   const id = request.params.id
   const column = request.body.column
   const value = request.body.value
+  console.log(`${column} , ${value}`)
   // const { name, checked, priority, date, notes } = request.body
   try {
     await pool.query(
@@ -125,7 +128,7 @@ const updateTask = async (request, response) => {
       where tid = ${tid}`,
       (error, results) => {
         if (error) throw error
-        response.status(200).send([`Task renamed`])
+        response.status(200).send(['Task renamed'])
       }
     )
   } catch (e) {
@@ -134,8 +137,8 @@ const updateTask = async (request, response) => {
 }
 
 const deleteTask = async (request, response) => {
-  const tid = request.params.tid
-  const id = request.params.id
+  const { tid, id } = request.params
+  // const id = request.params.id
   try {
     await pool.query(
       `DELETE FROM tasks WHERE tid = ${tid}`,
