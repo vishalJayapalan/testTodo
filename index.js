@@ -26,6 +26,10 @@ app.post('/lists/:id/tasks', db.createTask)
 app.put('/lists/:id/tasks/:tid', db.updateTask)
 app.delete('/lists/:id/tasks/:tid', db.deleteTask)
 
+app.get('/todayTasks', db.getTodayTasks)
+app.get('/scheduledTasks', db.getScheduledTasks)
+app.delete('/clearCompletedTasks/:id', db.clearCompletedTasks)
+
 app.listen(port, () => {
   console.log(`App running on port ${port}.`)
 })

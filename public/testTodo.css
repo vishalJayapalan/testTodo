@@ -14,7 +14,7 @@ body {
 .center {
   display: flex;
 }
-.add{
+.add {
   margin-top: 20px;
   margin-left: 30%;
   width: 40%;
@@ -43,7 +43,7 @@ body {
   width: 125px;
   display: inline;
 }
-.fas{
+.fas {
   margin-top: 10px;
   margin-left: 10px;
 }
@@ -86,7 +86,7 @@ body {
   padding-bottom: 20px;
   /* display: grid; */
   grid-column-gap: 20px;
-  display: none;
+  /* display: none; */
   /* justify-content: space-around; */
 }
 .notes {
@@ -125,7 +125,7 @@ body {
 textarea {
   resize: none;
 }
-.openTaskFeaturesBtn{
+.openTaskFeaturesBtn {
   /* margin-top: 10px; */
   width: 20px;
   height: 20px;
@@ -134,17 +134,16 @@ textarea {
 }
 .openTaskFeaturesBtn:hover {
   /* background-color: rgb(154, 185, 154); */
-  font-size: 150%
+  font-size: 150%;
 }
-  .fas:hover{
-    font-size: 150%;
-    border-color: black;
-    border-radius: 5px;
-  }
-.hr{
-  border: 1px solid yellow
+.fas:hover {
+  font-size: 150%;
+  border-color: black;
+  border-radius: 5px;
 }
-.taskName:hover{
-  border: black
-  border-radius: 10px
+.hr {
+  border: 1px solid yellow;
+}
+.taskName:hover {
+  border: black;
 }

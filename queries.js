@@ -81,12 +81,10 @@ const deleteList = async (request, response) => {
 }
 
 const getTasks = async (request, response) => {
-  // console.log('getTASK')
   const id = request.params.id
-  // console.log(id)
   try {
     await pool.query(
-      `SELECT * FROM tasks WHERE id = ${id} ORDER BY tid ASC`,
+      `SELECT * FROM tasks WHERE id = ${id} ORDER BY checked, priority DESC, date ASC`,
       (error, results) => {
         if (error) throw error
         response.status(200).send(results.rows)
@@ -105,8 +103,6 @@ const createTask = async (request, response) => {
       `INSERT INTO tasks (checked,tname,priority,date,notes,id) VALUES ('${checked}','${tname}','${priority}','${date}','${notes}','${id}') RETURNING tid`,
       (error, results) => {
         if (error) throw error
-        console.log('result')
-        console.log(results.rows)
         response.status(201).send(results.rows[0].tid.toString())
       }
     )
@@ -120,8 +116,6 @@ const updateTask = async (request, response) => {
   const id = request.params.id
   const column = request.body.column
   const value = request.body.value
-  console.log(`${column} , ${value}`)
-  // const { name, checked, priority, date, notes } = request.body
   try {
     await pool.query(
       `UPDATE tasks SET ${column} = '${value}'
@@ -138,7 +132,6 @@ const updateTask = async (request, response) => {
 
 const deleteTask = async (request, response) => {
   const { tid, id } = request.params
-  // const id = request.params.id
   try {
     await pool.query(
       `DELETE FROM tasks WHERE tid = ${tid}`,
@@ -147,6 +140,52 @@ const deleteTask = async (request, response) => {
         response
           .status(200)
           .send([`task deleted with ID: ${tid} of list with ID: ${id}`])
+      }
+    )
+  } catch (e) {
+    response.status(500).send(['unable to delete task'])
+  }
+}
+
+const getTodayTasks = async (request, response) => {
+  try {
+    await pool.query(
+      `SELECT * FROM tasks WHERE date != false ORDER BY checked, priority DESC, date ASC`,
+      (error, results) => {
+        if (error) throw error
+        response.status(200).send(results.rows)
+      }
+    )
+  } catch (e) {
+    response.status(500).send(['unable to fetch tasks'])
+  }
+}
+
+const getScheduledTasks = async (request, response) => {
+  console.log('inhere')
+  try {
+    await pool.query(
+      `SELECT * FROM tasks WHERE date!='false' ORDER BY checked, priority DESC, date ASC`,
+      (error, results) => {
+        if (error) throw error
+        response.status(200).send(results.rows)
+      }
+    )
+  } catch (e) {
+    response.status(500).send(['unable to fetch tasks'])
+  }
+}
+
+const clearCompletedTasks = async (request, response) => {
+  const { id } = request.params
+  try {
+    await pool.query(
+      `DELETE FROM tasks WHERE checked = true AND id = ${id}`,
+      (error, results) => {
+        if (error) throw error
+        response
+          .status(200)
+          .send([`completed tasks deleted of list with ID: ${id}`])
       }
     )
   } catch (e) {
@@ -163,5 +202,8 @@ module.exports = {
   getTasks,
   createTask,
   updateTask,
-  deleteTask
+  deleteTask,
+  getTodayTasks,
+  getScheduledTasks,
+  clearCompletedTasks
 }
