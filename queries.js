@@ -84,7 +84,7 @@ const getTasks = async (request, response) => {
   const id = request.params.id
   try {
     await pool.query(
-      `SELECT * FROM tasks WHERE id = ${id} ORDER BY checked, priority DESC, date ASC`,
+      `SELECT * FROM tasks WHERE id = ${id} ORDER BY checked, priority DESC, date ASC,tid ASC`,
       (error, results) => {
         if (error) throw error
         response.status(200).send(results.rows)
@@ -162,7 +162,6 @@ const getTodayTasks = async (request, response) => {
 }
 
 const getScheduledTasks = async (request, response) => {
-  console.log('inhere')
   try {
     await pool.query(
       `SELECT * FROM tasks WHERE date!='false' ORDER BY checked, priority DESC, date ASC`,

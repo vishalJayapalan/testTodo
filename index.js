@@ -1,20 +1,11 @@
 const express = require('express')
 const db = require('./queries')
-// const bodyParser = require('body-parser')
 const app = express()
 const port = 3000
 
 app.use(express.json())
 app.use(express.static('public'))
-// app.use(bodyParser.json())
-// app.use(
-//   bodyParser.urlencoded({
-//     extended: true
-//   })
-// )
-// app.get('/', (request, response) => {
-//   response.json({ info: 'Node.js, Express, and Postgres API' })
-// })
+
 app.get('/lists', db.getLists)
 app.get('/lists/:id', db.getListById)
 app.post('/lists', db.createList)

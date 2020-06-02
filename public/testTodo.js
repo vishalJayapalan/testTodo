@@ -5,7 +5,6 @@ const addListContainer = document.querySelector('.addListContainer')
 const searchButton = document.querySelector('.searchBtn')
 const scheduledButton = document.querySelector('.scheduledBtn')
 const todayButton = document.querySelector('.todayBtn')
-// const listButton = document.querySelector('.listBtn')
 
 const taskPage = document.querySelector('.taskPage')
 const taskContainer = document.querySelector('.taskContainer')
@@ -30,75 +29,60 @@ async function dbReq (url, data, method) {
       'Content-Type': 'application/json'
     }
   })
-  returnVal = await response.json()
+  const returnVal = await response.json()
   return returnVal
 }
 
-// let list = JSON.parse(localStorage.getItem('todo')) || []
 let list = []
 
 async function listArrayCreatorFunction () {
-  let listResponse = await window.fetch('http://localhost:3000/lists')
+  const listResponse = await window.fetch('http://localhost:3000/lists')
   list = await listResponse.json()
+  return list
 }
-let count
-let todoCount
 
 function showTodayList () {
   const tasksToShow = []
   const today = new Date()
-  for (const lists of list) {
-    if (schList['todos'].length) {
-      for (const schTodos of schList['todos']) {
-        if (
-          new Date(schTodos.date).toISOString().slice(0, 10) ===
-          today.toISOString().slice(0, 10)
-        ) {
-          tasksToShow.push({
-            tid: schTodos.tid,
-            checked: schTodos.checked,
-            tName: schTodos.tName,
-            priority: schTodos.priority,
-            date: schTodos.date,
-            notes: schTodos.notes
-          })
-        }
-      }
-    }
-  }
-  taskContainer.innerHTML = ''
-  listPage.style = 'display:none'
-  taskPage.style = 'display:block'
-  if (tasksToShow.length) {
-    taskCreatorFunction(tasksToShow, true)
-    featureOpenSelectorTask()
-    pTaskSelector()
-    doneUpdateSelector()
-  } else {
-    const nothing = document.createElement('p')
-    taskContainer.appendChild(nothing)
-    nothing.textContent = 'No Tasks For today'
-  }
+  console.log(today)
+  // for (const lists of list) {
+  //   if (schList['todos'].length) {
+  //     for (const schTodos of schList['todos']) {
+  //       if (
+  //         new Date(schTodos.date).toISOString().slice(0, 10) ===
+  //         today.toISOString().slice(0, 10)
+  //       ) {
+  //         tasksToShow.push({
+  //           tid: schTodos.tid,
+  //           checked: schTodos.checked,
+  //           tName: schTodos.tName,
+  //           priority: schTodos.priority,
+  //           date: schTodos.date,
+  //           notes: schTodos.notes
+  //         })
+  //       }
+  //     }
+  //   }
+  // }
+  // taskContainer.innerHTML = ''
+  // listPage.style = 'display:none'
+  // taskPage.style = 'display:block'
+  // if (tasksToShow.length) {
+  //   taskCreatorFunction(tasksToShow, true)
+  //   pTaskSelector()
+  //   doneUpdateSelector()
+  // } else {
+  //   const nothing = document.createElement('p')
+  //   taskContainer.appendChild(nothing)
+  //   nothing.textContent = 'No Tasks For today'
+  // }
 }
 
-function showScheduledList () {
-  const tasksToShow = []
-  for (const lists of list) {
-    if (schList['todos'].length) {
-      for (const schTodos of schList['todos']) {
-        if (schTodos.date !== false) {
-          tasksToShow.push({
-            tid: schTodos.tid,
-            checked: schTodos.checked,
-            tName: schTodos.tName,
-            priority: schTodos.priority,
-            date: schTodos.date,
-            notes: schTodos.notes
-          })
-        }
-      }
-    }
-  }
+async function showScheduledList () {
+  const taskResponse = await window.fetch(
+    'http://localhost:3000/scheduledTasks'
+  )
+  const tasksToShow = await taskResponse.json()
   taskContainer.innerHTML = ''
   listPage.style = 'display:none'
   taskPage.style = 'display:block'
@@ -121,15 +105,15 @@ function elt (type, props, ...children) {
     if (typeof child !== 'string') dom.appendChild(child)
     else dom.appendChild(document.createTextNode(child))
   }
-  // doneUpdateSelector
   return dom
 }
-// console.log(list.length)
-listsFromDb()
+listsFromDb(list)
 
-async function listsFromDb () {
-  console.log('listsFromDb')
-  await listArrayCreatorFunction()
+async function listsFromDb (list) {
+  listContainer.innerHTML = ''
+  if (!list.length) {
+    list = await listArrayCreatorFunction()
+  }
   if (list.length) {
     for (const listById of list) {
       const res = elt(
@@ -166,19 +150,16 @@ function searchListCreator () {
     listsFromDb(list)
   })
   searchList.addEventListener('keyup', async event => {
-    let tempList = []
+    const tempList = []
     for (const newList of list) {
-      let lists = await window.fetch(`http://localhost:3000/lists/`)
-      lists = await lists.json()
-      console.log(list)
       if (
         newList.name.toLowerCase().includes(event.target.value.toLowerCase())
       ) {
-        tempList.push(newList.id)
+        await tempList.push(newList)
       }
     }
     listContainer.innerHTML = ''
-    listsFromDb(tempList)
+    await listsFromDb(tempList)
     if (event.keyCode === 13) {
       event.target.value = ''
       searchList.style.display = 'none'
@@ -213,25 +194,9 @@ function listInput () {
 }
 
 async function createList (listName) {
-  console.log('createList')
   if (listName) {
-    let tid = await dbReq('lists', { name: listName }, 'POST')
-    count = tid
-    const res = elt(
-      'div',
-      {
-        id: count,
-        className: 'listItems'
-      },
-      elt('div', { id: count, className: 'lists' }),
-      elt('i', { id: count, className: 'fas fa-archive' }),
-      elt('p', { id: count, className: 'listName', innerText: listName })
-    )
-    listContainer.appendChild(res)
-    list.push({ id: count, name: listName })
-    deleteSelectorList()
-    pSelectorList()
-    divSelectorList()
+    await dbReq('lists', { name: listName }, 'POST')
+    listsFromDb()
   }
 }
 
@@ -245,7 +210,6 @@ function deleteList (event) {
   const listid = event.target.id
   const deleteElement = document.getElementById(`${listid}`)
   deleteElement.parentNode.removeChild(deleteElement)
-  console.log('DeleteLIst')
   list = list.filter(a => a.id != listid)
   dbReq(`lists/${listid}/`, {}, 'DELETE')
 }
@@ -256,7 +220,6 @@ function divSelectorList () {
     list.addEventListener('mousedown', event => {
       event.preventDefault()
       if (event.button === 0) {
-        console.log('listDivSelector')
         openFromList(event.target.id)
       } else if (event.button === 2) {
         event.preventDefault()
@@ -273,8 +236,6 @@ function pSelectorList () {
     p.addEventListener('mousedown', event => {
       event.preventDefault()
       if (event.button === 0) {
-        console.log('renameInput')
-        console.log(event)
         renameInput(event)
       } else if (event.button === 2) {
         event.preventDefault()
@@ -311,7 +272,6 @@ function renameInput (event) {
 function renameList (event) {
   const listid = event.target.id
   const listClass = event.target.className
-  console.log('renameList')
   const newName = event.target.value
   dbReq(`lists/${listid}/`, { name: newName }, 'PUT')
   const listName = document.querySelectorAll(`.${listClass}`)
@@ -325,7 +285,6 @@ function selectList () {
 }
 
 function openFromList (listid) {
-  console.log('OpenFromList')
   listPage.style = 'display:none'
   taskPage.style = 'display:block'
   taskContainer.innerHTML = ''
@@ -343,9 +302,7 @@ function openFromList (listid) {
     }
   })
 }
-
 function taskCreatorFunction (lTodos, fromLocal = false) {
-  console.log('taskCreatorFunction')
   const taskName = lTodos[0].tName
   for (const todo of lTodos) {
     const div = elt(
@@ -374,6 +331,7 @@ function taskCreatorFunction (lTodos, fromLocal = false) {
         'div',
         {
           id: `${todo.tid}`,
+          style: 'display: none',
           className: 'taskFeatures'
         },
         elt('p', {
@@ -421,38 +379,33 @@ function taskCreatorFunction (lTodos, fromLocal = false) {
         })
       )
     )
-    if (fromLocal) {
-      taskContainer.appendChild(div)
-      const priority = document.querySelectorAll('.prioritySelect')
-      const num = todo.priority
-      const priorities = priority[priority.length - 1]
-      priorities.selectedIndex = num
-      let requiredHr
-      const hrs = document.querySelectorAll('.hr')
-      for (const hr of hrs) {
-        if (hr.id == todo.tid) {
-          requiredHr = hr
-          break
+    taskContainer.appendChild(div)
+    const priority = document.querySelectorAll('.prioritySelect')
+    const num = todo.priority
+    const priorities = priority[priority.length - 1]
+    priorities.selectedIndex = num
+    let requiredHr
+    const hrs = document.querySelectorAll('.hr')
+    for (const hr of hrs) {
+      if (hr.id == todo.tid) {
+        requiredHr = hr
+        break
+      }
+    }
+    const priorityColor = [
+      'border: 1px solid yellow',
+      'border: 1px solid green',
+      'border: 1px solid blue',
+      'border: 1px solid red'
+    ]
+    requiredHr.style = priorityColor[num]
+    if (todo.checked) {
+      const taskNameP = document.querySelectorAll('.taskName')
+      for (const task of Array.from(taskNameP)) {
+        if (task.id == todo.tid) {
+          task.style['text-decoration'] = 'line-through'
         }
       }
-      const priorityColor = [
-        'border: 1px solid yellow',
-        'border: 1px solid green',
-        'border: 1px solid blue',
-        'border: 1px solid red'
-      ]
-      // console.log(requiredHr)
-      requiredHr.style = priorityColor[num]
-      if (todo.checked) {
-        const taskNameP = document.querySelectorAll('.taskName')
-        for (const task of Array.from(taskNameP)) {
-          if (task.id === todo.tid) {
-            task.style = 'text-decoration: line-through'
-          }
-        }
-      }
-    } else {
-      taskContainer.appendChild(div)
     }
   }
 }
@@ -462,13 +415,10 @@ async function taskFromDb (listid) {
   let taskResponse = await window.fetch(
     `http://localhost:3000/lists/${listid}/tasks`
   )
-  console.log('taskFromDB')
   tasks = await taskResponse.json()
-  todoCount = 0
   if (tasks.length) {
     taskCreatorFunction(tasks, true)
   }
-
   featureOpenSelectorTask(listid)
   pTaskSelector(listid)
   doneUpdateSelector(listid)
@@ -477,7 +427,6 @@ async function taskFromDb (listid) {
 async function addTask (event, listid) {
   const taskName = event.target.value // required for updating in localStorage
   event.target.value = ''
-  todoCount++
   let tid = await dbReq(
     `lists/${listid}/tasks`,
     {
@@ -490,13 +439,7 @@ async function addTask (event, listid) {
     },
     'POST'
   )
-  console.log('addTask')
-  const lTodos = [{ tid: tid, tname: `${taskName}` }]
-  taskCreatorFunction(lTodos, false)
-  // above is for adding task
-  doneUpdateSelector(listid)
-  featureOpenSelectorTask(listid)
-  pTaskSelector(listid)
+  openFromList(listid)
 }
 
 back.addEventListener('click', backToListPage)
@@ -508,7 +451,6 @@ function pTaskSelector (listid) {
   }
 }
 function renameTaskInput (event, listid) {
-  console.log('renameTaskInput')
   const tid = event.target.id
   const taskClass = event.target.className
   const newInput = elt('input', {
@@ -532,7 +474,6 @@ function renameTaskInput (event, listid) {
   }
 }
 function renameTask (event, listid) {
-  console.log('renameTask')
   const tid = event.target.id
   const newName = event.target.value
   dbReq(
@@ -553,16 +494,12 @@ function featureOpenSelectorTask (listid) {
   }
 }
 function featureTaskOpener (event, listid) {
-  console.log(`featureTaskOpener${listid}`)
   let tid = event.target.id
   const taskFeatures = document.querySelectorAll('.taskFeatures')
   for (const task of Array.from(taskFeatures)) {
     if (task.id === tid) {
-      console.log(task)
       if (task.style.display == 'none') {
-        console.log('not openig')
-        task.style = 'display:grid'
-        console.log(task)
+        task.style = 'display: grid'
         continue
       } else {
         task.style.display = 'none'
@@ -590,84 +527,21 @@ function doneUpdateSelector (listid) {
     done.addEventListener('change', event => doneUpdate(event, listid))
   }
 }
-function doneUpdate (event, listid) {
+async function doneUpdate (event, listid) {
   const tid = event.target.parentNode.parentNode.id
-  console.log(`done Update`)
-  dbReq(
+  await dbReq(
     `lists/${listid}/tasks/${tid}/`,
     { column: 'checked', value: event.target.checked },
     'PUT'
   )
-
-  if (event.target.checked) {
-    let taskNameP = document.querySelectorAll('.taskName')
-    for (const task of Array.from(taskNameP)) {
-      if (task.id == tid) {
-        task.style = 'text-decoration: line-through'
-      }
-    }
-  } else {
-    let taskNameP = document.querySelectorAll('.taskName')
-    for (const task of Array.from(taskNameP)) {
-      if (task.id == tid) {
-        task.style = 'text-decoration: underline;'
-      }
-    }
-  }
-  // todos[count].checked = event.target.checked
-  // todos = dateSorting(todos)
-  // todos = prioritySorting(todos)
-  // todos = checkedSorting(todos)
   taskContainer.innerHTML = ''
   openFromList(listid)
 }
 
-function prioritySorting (array) {
-  array.sort((a, b) => {
-    a = a.priority
-    b = b.priority
-    return a > b ? -1 : a < b ? 1 : 0
-  })
-  return array
-}
-
-function dateSorting (array) {
-  array.sort(function (a, b) {
-    a = new Date(a.date)
-    b = new Date(b.date)
-    const c = new Date(false)
-    if (a.getTime() === c.getTime() && b.getTime() !== c.getTime()) {
-      return 1
-    }
-    if (b.getTime() === c.getTime() && a.getTime() !== c.getTime()) {
-      return -1
-    }
-    if (b.getTime() === new Date(false) && a.getTime() === c.getTime()) {
-      return 0
-    }
-    return a < b ? -1 : a < b ? 1 : 0
-  })
-  return array
-}
-
-function checkedSorting (array) {
-  array.sort((a, b) => {
-    a = a.checked
-    b = b.checked
-    if (a === b) return 0
-    if (a === false) return -1
-    if (b === false) return 1
-  })
-  return array
-}
-
-function clearCompletedTask (tid) {
-  let todos = lists.todos
-  todos = todos.filter(a => a.checked === false)
-  lists.todos = todos
+async function clearCompletedTask (id) {
+  await dbReq(`clearCompletedTasks/${id}`, {}, 'DELETE')
   taskContainer.innerHTML = ''
-  console.log('clearCompletedTask')
-  openFromList(tid)
+  openFromList(id)
 }
 
 function notesUpdateSelector (listid) {
@@ -683,31 +557,24 @@ function notesUpdate (event, listid) {
     { column: 'notes', value: `${event.target.value}` },
     'PUT'
   )
-  console.log('notesUpdate')
 }
 
 function priorityChangeSelector (listid) {
-  console.log('priorityChangeSelector')
   const priority = document.querySelectorAll('.prioritySelect')
   for (const priorities of Array.from(priority)) {
     priorities.addEventListener('change', event => {
-      console.log('callingPriorityUpdate')
       priorityUpdate(event, listid)
     })
   }
 }
-function priorityUpdate (event, listid) {
+async function priorityUpdate (event, listid) {
   const tid = event.target.parentNode.parentNode.id
-  dbReq(
+  await dbReq(
     `lists/${listid}/tasks/${tid}/`,
     { column: 'priority', value: `${event.target.value}` },
     'PUT'
   )
-  // todos = dateSorting(todos)
-  // todos = prioritySorting(todos)
-  // todos = checkedSorting(todos)
   taskContainer.innerHTML = ''
-  console.log('priorityUpdate')
   openFromList(listid)
 }
 
@@ -717,19 +584,15 @@ function dateChangeSelector (listid) {
     date.addEventListener('change', event => dateUpdate(event, listid))
   }
 }
-function dateUpdate (event, listid) {
+async function dateUpdate (event, listid) {
   if (event.target.value) {
     const tid = event.target.parentNode.parentNode.id
-    dbReq(
+    await dbReq(
       `lists/${listid}/tasks/${tid}/`,
       { column: 'date', value: `${event.target.value}` },
       'PUT'
     )
-    // todos = dateSorting(todos)
-    // todos = prioritySorting(todos)
-    // todos = checkedSorting(todos)
     taskContainer.innerHTML = ''
-    console.log('dateUpdate')
     openFromList(listid)
   }
 }
@@ -740,11 +603,9 @@ function deleteTaskSelector (listid) {
     task.addEventListener('click', event => deleteTask(event, listid))
   }
 }
-
-function deleteTask (event, listid) {
+async function deleteTask (event, listid) {
   const tid = event.target.parentNode.parentNode.id
   const element = document.getElementById(tid)
   element.parentNode.removeChild(element)
-  console.log('taskDeleted')
-  dbReq(`lists/${listid}/tasks/${tid}`, {}, 'DELETE')
+  await dbReq(`lists/${listid}/tasks/${tid}`, {}, 'DELETE')
 }
